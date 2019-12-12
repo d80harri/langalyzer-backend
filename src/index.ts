@@ -1,62 +1,72 @@
-import express from "express";
+import express from 'express';
 
-import mongoose, { Document, Schema } from "mongoose";
+import bodyParser from 'body-parser';
+import { MongoClient } from 'mongodb';
 
 const app = express();
 const port = process.env.PORT || 8080; // default port to listen
 
-// define a route handler for the default home page
-app.get("/", (req, res) => {
-    res.send("Hello world!");
-});
+const uri = 'mongodb://root:passm3@ds353738.mlab.com:53738/heroku_mjsmh2kg';
 
-// start the Express server
-app.listen(port, () => {
-    // tslint:disable-next-line:no-console
-    console.log(`server started at http://localhost:${port}`);
-});
+export class MongoHelper {
+    public static client: MongoClient;
 
-const uri = "mongodb://root:passm3@ds353738.mlab.com:53738/heroku_mjsmh2kg";
-// const uri = "mongodb+srv://root:V26iyeyt.@langalyzer-ysxsi.mongodb.net/test?retryWrites=true&w=majority";
-
-const connect = () => {
-    mongoose
-        .connect(
-            uri,
-            { useNewUrlParser: true }
-        )
-        .then(() => {
-            // tslint:disable-next-line: no-console
-            return console.info(`Successfully connected to ${uri}`);
-        })
-        .catch((error) => {
-            // tslint:disable-next-line: no-console
-            console.error("Error connecting to database: ", error);
-            return process.exit(1);
+    public static connect(url: string): Promise<any> {
+        console.log('connection3');
+        return new Promise<any>((resolve, reject) => {
+            console.log('connection2');
+            MongoClient.connect(url, { useNewUrlParser: true }, (err, client: MongoClient) => {
+                console.log('connection');
+                if (err) {
+                    console.log('error', err);
+                    reject(err);
+                } else {
+                    console.log('client', client);
+                    MongoHelper.client = client;
+                    resolve(client);
+                }
+            });
         });
-};
-connect();
+    }
 
-mongoose.connection.on("disconnected", connect);
-
-export interface ICat extends Document {
-    name: string;
+    public disconnect(): void {
+        MongoHelper.client.close();
+    }
 }
 
-// tslint:disable-next-line: variable-name
-export const CatSchema: Schema<ICat> = new Schema({ name: { type: String } });
+app.use(bodyParser.json());
 
-export const Cat = mongoose.model<ICat>("Cat", CatSchema);
-
-app.post("/api/document", async (req, res) => {
-    const cat = await new Cat({
-        name: req.body.name
-    }).save();
-
-    return res.send(cat);
+// start the Express server
+app.listen(port, async () => {
+    // tslint:disable-next-line:no-console
+    console.log(`server started at http://localhost:${port}`);
+    await MongoHelper.connect(uri);
 });
 
-app.get("/api/document", async (req, res) => {
-    const result = await Cat.find().exec();
-    return res.send(result);
+// define a route handler for the default home page
+app.get('/', (req, res) => {
+    res.send('Hello world!');
 });
+
+
+
+app.post('/:db/:collection', async (req, res) => {
+    const db = req.params.db;
+    const collection = req.params.collection;
+    const saveResult = await MongoHelper.client.db(db).collection(collection).insertOne(req.body);
+
+    return res.send(req.body);
+});
+
+app.get('/:db/:collection', async (req, res) => {
+    const db = req.params.db;
+    const collection = req.params.collection;
+    let query = {};
+    if (req.query.query) {
+        query = JSON.parse(req.query.query);
+    }
+
+    const result = await MongoHelper.client.db(db).collection(collection).find(query).toArray();
+    res.send(result);
+});
+

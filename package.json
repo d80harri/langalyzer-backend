@@ -4,7 +4,7 @@
   "description": "",
   "main": "dist/index.js",
   "scripts": {
-    "prebuild": "npm install -g tslint npm install -g typescript && tslint -c tslint.json -p tsconfig.json --fix",
+    "prebuild": "tslint -c tslint.json -p tsconfig.json --fix",
     "build": "tsc",
     "prestart": "npm run build",
     "start": "node .",
@@ -18,7 +18,8 @@
     "@types/mongoose": "^5.5.34",
     "@types/node": "^12.12.17",
     "express": "^4.17.1",
-    "mongoose": "^5.8.0"
+    "mongoose": "^5.8.0",
+    "crest": "https://github.com/ledsun/crest.git"
   },
   "devDependencies": {
     "tslint": "^5.20.1",
