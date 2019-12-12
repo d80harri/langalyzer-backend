@@ -40,7 +40,11 @@ app.use(bodyParser.json());
 app.listen(port, async () => {
     // tslint:disable-next-line:no-console
     console.log(`server started at http://localhost:${port}`);
-    await MongoHelper.connect(uri);
+    try {
+        await MongoHelper.connect(uri);
+    } catch (e) {
+        console.log('error occured', e);
+    }
 });
 
 // define a route handler for the default home page
@@ -63,10 +67,22 @@ app.get('/:db/:collection', async (req, res) => {
     const collection = req.params.collection;
     let query = {};
     if (req.query.query) {
-        query = JSON.parse(req.query.query);
+        try {
+            query = JSON.parse(req.query.query);
+        } catch (e) {
+            res.status(400);
+            res.send({
+                message: 'query is not valid ' + req.query.query,
+                exception: e
+            });
+        }
     }
 
-    const result = await MongoHelper.client.db(db).collection(collection).find(query).toArray();
-    res.send(result);
+    try {
+        const result = await MongoHelper.client.db(db).collection(collection).find(query).toArray();
+        res.send(result);
+    } catch (e) {
+        console.log('error', e);
+    }
 });
 
