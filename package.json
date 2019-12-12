@@ -4,9 +4,8 @@
   "description": "",
   "main": "dist/index.js",
   "scripts": {
-    "prebuild": "tslint -c tslint.json -p tsconfig.json --fix",
-    "build": "tsc",
-    "prestart": "npm run build",
+    "lint": "tslint -c tslint.json -p tsconfig.json --fix",
+    "post-install": "tsc",
     "start": "node .",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
