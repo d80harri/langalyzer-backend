@@ -4,10 +4,12 @@
   "description": "",
   "main": "dist/index.js",
   "scripts": {
-    "lint": "tslint -c tslint.json -p tsconfig.json --fix",
-    "post-install": "tsc",
-    "start": "node .",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build-ts": "tsc",
+    "postinstall": "npm run build-ts",
+    "start": "npm run serve",
+    "serve": "node dist/server.js",
+    "watch-node": "nodemon dist/server.js",
+    "watch-ts": "tsc -w"
   },
   "keywords": [],
   "author": "",
