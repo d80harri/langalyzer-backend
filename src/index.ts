@@ -1,17 +1,15 @@
-import express from 'express';
-
-import bodyParser from 'body-parser';
 import { MongoClient } from 'mongodb';
+import express from 'express';
+import bodyParser from 'body-parser';
+import * as uuid from 'uuid';
 
 const app = express();
 const port = process.env.PORT || 8080; // default port to listen
 
-const uri = 'mongodb://root:passm3@ds353738.mlab.com:53738/heroku_mjsmh2kg';
-
 export class MongoHelper {
     public static client: MongoClient;
 
-    public static connect(url: string): Promise<any> {
+    public static connect(url: string): Promise<MongoClient> {
         console.log('connection3');
         return new Promise<any>((resolve, reject) => {
             console.log('connection2');
@@ -40,11 +38,7 @@ app.use(bodyParser.json());
 app.listen(port, async () => {
     // tslint:disable-next-line:no-console
     console.log(`server started at http://localhost:${port}`);
-    try {
-        await MongoHelper.connect(uri);
-    } catch (e) {
-        console.log('error occured', e);
-    }
+
 });
 
 // define a route handler for the default home page
@@ -52,17 +46,48 @@ app.get('/', (req, res) => {
     res.send('Hello world!');
 });
 
+const clients: { entry: { id: string, uri: string }, client: MongoClient }[] = [];
+
+app.post('/clients', async (req, res) => {
+    try {
+        const clientJson = req.body;
+        let clientEntry = clients.find(c => c.entry.uri === clientJson.uri);
+
+        if (!clientEntry) {
+            clientJson.id = uuid.v1();
+            const client = await MongoHelper.connect(clientJson.uri);
+            clientEntry = { entry: clientJson, client };
+            clients.push(clientEntry);
+        }
+        res.send(clientEntry.entry);
+    } catch (e) {
+        console.log('error occured', e);
+        res.status(500);
+    }
+});
+
+app.get('/clients', async (req, res) => {
+    res.send(clients.map(c => c.entry));
+});
 
 
-app.post('/:db/:collection', async (req, res) => {
+app.post('/db/:client/:db/:collection', async (req, res) => {
+    const client = clients.find(c => c.id === req.params.client);
     const db = req.params.db;
     const collection = req.params.collection;
-    const saveResult = await MongoHelper.client.db(db).collection(collection).insertOne(req.body);
+    await client.client.db(db).collection(collection).insertOne(req.body);
 
     return res.send(req.body);
 });
 
-app.get('/:db/:collection', async (req, res) => {
+app.get('/db/:client/:db/:collection', async (req, res) => {
+    const client = clients.find(c => c.id === req.params.client);
+
+    if (!client) {
+        res.status(400);
+        res.send({ message: 'unknown client. did you forget to post a client?' });
+    }
+
     const db = req.params.db;
     const collection = req.params.collection;
     let query = {};
@@ -79,7 +104,7 @@ app.get('/:db/:collection', async (req, res) => {
     }
 
     try {
-        const result = await MongoHelper.client.db(db).collection(collection).find(query).toArray();
+        const result = await client.client.db(db).collection(collection).find(query).toArray();
         res.send(result);
     } catch (e) {
         console.log('error', e);
