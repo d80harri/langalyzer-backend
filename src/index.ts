@@ -16,7 +16,8 @@ app.listen(port, () => {
     console.log(`server started at http://localhost:${port}`);
 });
 
-const uri = "mongodb+srv://root:V26iyeyt.@langalyzer-ysxsi.mongodb.net/test?retryWrites=true&w=majority";
+const uri = "mongodb://root:passm3@ds353738.mlab.com:53738/heroku_mjsmh2kg";
+// const uri = "mongodb+srv://root:V26iyeyt.@langalyzer-ysxsi.mongodb.net/test?retryWrites=true&w=majority";
 
 const connect = () => {
     mongoose
