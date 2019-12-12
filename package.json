@@ -4,7 +4,7 @@
   "description": "",
   "main": "dist/index.js",
   "scripts": {
-    "prebuild": "npm install && tslint -c tslint.json -p tsconfig.json --fix",
+    "prebuild": "npm install -g tslint npm install -g typescript && tslint -c tslint.json -p tsconfig.json --fix",
     "build": "tsc",
     "prestart": "npm run build",
     "start": "node .",
