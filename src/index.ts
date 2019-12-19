@@ -72,7 +72,7 @@ app.get('/clients', async (req, res) => {
 
 
 app.post('/db/:client/:db/:collection', async (req, res) => {
-    const client = clients.find(c => c.id === req.params.client);
+    const client = clients.find(c => c.entry.id === req.params.client);
     const db = req.params.db;
     const collection = req.params.collection;
     await client.client.db(db).collection(collection).insertOne(req.body);
@@ -81,7 +81,7 @@ app.post('/db/:client/:db/:collection', async (req, res) => {
 });
 
 app.get('/db/:client/:db/:collection', async (req, res) => {
-    const client = clients.find(c => c.id === req.params.client);
+    const client = clients.find(c => c.entry.id === req.params.client);
 
     if (!client) {
         res.status(400);
